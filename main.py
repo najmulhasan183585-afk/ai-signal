@@ -1,24 +1,30 @@
 import streamlit as st
 
-# ১. বাটনগুলোর জন্য ছবির মতো কাস্টম CSS
+# --- ১. অ্যাপ কনফিগারেশন ---
+st.set_page_config(page_title="AI Analysis Dashboard", layout="centered")
+
+# --- ২. কাস্টম CSS (ছবির মতো হুবহু কালার ও ডিজাইন) ---
 st.markdown("""
 <style>
-    /* মেইন কন্টেইনার স্টাইল */
-    .main-container {
-        background-color: white;
-        padding: 30px;
-        border-radius: 20px;
-        max-width: 500px;
-        margin: auto;
-        text-align: center;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.1);
+    /* মেইন ব্যাকগ্রাউন্ড */
+    .stApp {
+        background-color: #0d1117;
     }
     
-    /* বাটন বিন্যাস */
+    /* বাটন কন্টেইনার স্টাইল */
+    .main-box {
+        background-color: white;
+        padding: 25px;
+        border-radius: 20px;
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    /* বাটনগুলোকে এক সারিতে (Row) আনার জন্য বিন্যাস */
     div[data-testid="column"] {
         display: flex;
         justify-content: center;
-        margin-bottom: 10px;
+        align-items: center;
     }
 
     .stButton > button {
@@ -27,10 +33,11 @@ st.markdown("""
         font-weight: bold !important;
         color: white !important;
         border: none !important;
-        height: 45px !important;
+        height: 40px !important;
+        font-size: 14px !important;
     }
 
-    /* Big Row Colors (আপনার ছবি অনুযায়ী) */
+    /* --- Big Row এর কালার সেট --- */
     div[data-testid="column"]:nth-of-type(1) button { background: #3498db !important; } /* +Big */
     div[data-testid="column"]:nth-of-type(2) button { background: #ff5733 !important; } /* 5 */
     div[data-testid="column"]:nth-of-type(3) button { background: #c70039 !important; } /* 6 */
@@ -38,7 +45,7 @@ st.markdown("""
     div[data-testid="column"]:nth-of-type(5) button { background: #581845 !important; } /* 8 */
     div[data-testid="column"]:nth-of-type(6) button { background: #2c3e50 !important; } /* 9 */
 
-    /* Small Row Colors (আপনার ছবি অনুযায়ী) */
+    /* --- Small Row এর কালার সেট --- */
     div[data-testid="column"]:nth-of-type(7) button { background: #e67e22 !important; } /* +Small */
     div[data-testid="column"]:nth-of-type(8) button { background: #2ecc71 !important; } /* 0 */
     div[data-testid="column"]:nth-of-type(9) button { background: #27ae60 !important; } /* 1 */
@@ -46,58 +53,66 @@ st.markdown("""
     div[data-testid="column"]:nth-of-type(11) button { background: #f1c40f !important; } /* 3 */
     div[data-testid="column"]:nth-of-type(12) button { background: #f39c12 !important; } /* 4 */
 
-    /* ইনপুট রেজাল্ট ডিসপ্লে */
+    /* ইনপুট বক্স ডিসপ্লে (কালো ব্যাকগ্রাউন্ড ও সবুজ টেক্সট) */
     .input-display {
         background-color: #1a1a1a;
         color: #00ff41;
         padding: 15px;
-        border-radius: 10px;
+        border-radius: 12px;
         font-family: 'Courier New', monospace;
         margin-top: 20px;
-        min-height: 80px;
-        word-wrap: break-word;
+        min-height: 100px;
+        text-align: left;
+        border: 1px solid #333;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ২. সেশন স্টেট (ডাটা মনে রাখার জন্য)
-if "input_list" not in st.session_state:
-    st.session_state.input_list = []
+# --- ৩. ডাটা স্টোরেজ (Session State) ---
+if "input_data" not in st.session_state:
+    st.session_state.input_data = []
 
-# ৩. ইন্টারফেস (UI) সাজানো
-st.markdown('<div class="main-container">', unsafe_allow_html=True)
-st.write("### AI Analysis Dashboard")
-st.write("Pattern Input Row")
+# --- ৪. ইউজার ইন্টারফেস (UI) ---
+st.title("📊 AI Analysis Dashboard")
 
-# --- Big Row ---
-col_b = st.columns([1.5, 1, 1, 1, 1, 1])
-col_b[0].button("+Big", key="label_b")
-if col_b[1].button("5", key="b5"): st.session_state.input_list.append("B-5")
-if col_b[2].button("6", key="b6"): st.session_state.input_list.append("B-6")
-if col_b[3].button("7", key="b7"): st.session_state.input_list.append("B-7")
-if col_b[4].button("8", key="b8"): st.session_state.input_list.append("B-8")
-if col_b[5].button("9", key="b9"): st.session_state.input_list.append("B-9")
+with st.container():
+    st.markdown('<div class="main-box">', unsafe_allow_html=True)
+    st.write("### Pattern Input Row")
+    
+    # --- BIG ROW সাজানো ---
+    col_b = st.columns([1.5, 1, 1, 1, 1, 1])
+    col_b[0].button("+Big", key="label_big")
+    if col_b[1].button("5", key="b5"): st.session_state.input_data.append("B-5")
+    if col_b[2].button("6", key="b6"): st.session_state.input_data.append("B-6")
+    if col_b[3].button("7", key="b7"): st.session_state.input_data.append("B-7")
+    if col_b[4].button("8", key="b8"): st.session_state.input_data.append("B-8")
+    if col_b[5].button("9", key="b9"): st.session_state.input_data.append("B-9")
 
-# --- Small Row ---
-col_s = st.columns([1.5, 1, 1, 1, 1, 1])
-col_s[0].button("+Small", key="label_s")
-if col_s[1].button("0", key="s0"): st.session_state.input_list.append("S-0")
-if col_s[2].button("1", key="s1"): st.session_state.input_list.append("S-1")
-if col_s[3].button("2", key="s2"): st.session_state.input_list.append("S-2")
-if col_s[4].button("3", key="s3"): st.session_state.input_list.append("S-3")
-if col_s[5].button("4", key="s4"): st.session_state.input_list.append("S-4")
+    st.write("") # সামান্য গ্যাপ
 
-# ৪. কালো বক্সে ইনপুটগুলো দেখানো (ছবির মতো)
-st.markdown(f'<div class="input-display">{" , ".join(st.session_state.input_list)}</div>', unsafe_allow_html=True)
+    # --- SMALL ROW সাজানো ---
+    col_s = st.columns([1.5, 1, 1, 1, 1, 1])
+    col_s[0].button("+Small", key="label_small")
+    if col_s[1].button("0", key="s0"): st.session_state.input_data.append("S-0")
+    if col_s[2].button("1", key="s1"): st.session_state.input_data.append("S-1")
+    if col_s[3].button("2", key="s2"): st.session_state.input_data.append("S-2")
+    if col_s[4].button("3", key="s3"): st.session_state.input_data.append("S-3")
+    if col_s[5].button("4", key="s4"): st.session_state.input_data.append("S-4")
 
-# Reset এবং Undo বাটন (ঐচ্ছিক)
-c1, c2 = st.columns(2)
-if c1.button("UNDO"):
-    if st.session_state.input_list: 
-        st.session_state.input_list.pop()
+    # --- ইনপুট ডিসপ্লে ---
+    display_text = " , ".join(st.session_state.input_data)
+    st.markdown(f'<div class="input-display">Input:<br>{display_text}</div>', unsafe_allow_html=True)
+
+    # --- কন্ট্রোল বাটন ---
+    st.write("")
+    c1, c2 = st.columns(2)
+    if c1.button("⬅️ UNDO"):
+        if st.session_state.input_data:
+            st.session_state.input_data.pop()
+            st.rerun()
+    if c2.button("🔄 RESET"):
+        st.session_state.input_data = []
         st.rerun()
-if c2.button("RESET"):
-    st.session_state.input_list = []
-    st.rerun()
 
-st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
