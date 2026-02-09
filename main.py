@@ -1,154 +1,89 @@
 import streamlit as st
-import random
-import time
-import sqlite3
-import hashlib
-import pandas as pd
 
-# ---------------- CONFIG ----------------
-st.set_page_config(page_title="NAJMUL NUMBER AI", layout="centered")
-
-LOGO_URL = "https://i.ibb.co/vzYm8Ym/najmul-logo.png"
-LOGIN_PASSWORD = "8899"
-
-# ---------------- DATABASE ----------------
-conn = sqlite3.connect("vip_history.db", check_same_thread=False)
-c = conn.cursor()
-c.execute("""
-CREATE TABLE IF NOT EXISTS history(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    period TEXT,
-    big_small TEXT,
-    numbers TEXT,
-    probability REAL,
-    result TEXT,
-    time DATETIME DEFAULT CURRENT_TIMESTAMP
-)
-""")
-conn.commit()
-
-# ---------------- SESSION ----------------
-if "auth" not in st.session_state: st.session_state.auth = False
-if "inputs" not in st.session_state: st.session_state.inputs = []
-if "show" not in st.session_state: st.session_state.show = False
-
-# ---------------- LOGIN ----------------
-if not st.session_state.auth:
-    st.title("🔐 NAJMUL VIP LOGIN")
-    pw = st.text_input("Password", type="password")
-    if st.button("LOGIN"):
-        if pw == LOGIN_PASSWORD:
-            st.session_state.auth = True
-            st.rerun()
-        else:
-            st.error("❌ Wrong Password")
-    st.stop()
-
-# ---------------- HEADER + STYLE ----------------
-st.markdown(f"""
+# --- বাটনগুলোর জন্য কাস্টম CSS (ছবির মতো কালার ও বিন্যাস) ---
+st.markdown("""
 <style>
-header, footer {{display:none;}}
-.stApp {{background:#05070b;color:white;}}
-.stButton>button {{width:100%;height:42px;font-weight:bold;border-radius:10px;}}
-.input-box {{background:#111;padding:12px;border-radius:12px;color:#00ff99;}}
-</style>
+    /* বাটনগুলোকে এক সারিতে আনার জন্য বিন্যাস */
+    div[data-testid="column"] {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .stButton > button {
+        width: 100% !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        color: white !important;
+        border: none !important;
+        height: 40px !important;
+        padding: 0px !important;
+    }
 
-<div style="display:flex;align-items:center;gap:10px;">
-<img src="{LOGO_URL}" width="45">
-<h3>NAJMUL NUMBER AI (NO COLOR)</h3>
-</div>
+    /* Big Row Colors (ছবির সাথে মিল রেখে) */
+    div[data-testid="column"]:nth-of-type(1) button { background: #4AA3DF !important; } /* +Big */
+    div[data-testid="column"]:nth-of-type(2) button { background: #FF5733 !important; } /* 5 */
+    div[data-testid="column"]:nth-of-type(3) button { background: #C70039 !important; } /* 6 */
+    div[data-testid="column"]:nth-of-type(4) button { background: #900C3F !important; } /* 7 */
+    div[data-testid="column"]:nth-of-type(5) button { background: #581845 !important; } /* 8 */
+    div[data-testid="column"]:nth-of-type(6) button { background: #2C3E50 !important; } /* 9 */
+
+    /* Small Row Colors (ছবির সাথে মিল রেখে) */
+    div[data-testid="column"]:nth-of-type(7) button { background: #E67E22 !important; } /* +Small */
+    div[data-testid="column"]:nth-of-type(8) button { background: #2ECC71 !important; } /* 0 */
+    div[data-testid="column"]:nth-of-type(9) button { background: #27AE60 !important; } /* 1 */
+    div[data-testid="column"]:nth-of-type(10) button { background: #16A085 !important; } /* 2 */
+    div[data-testid="column"]:nth-of-type(11) button { background: #F1C40F !important; } /* 3 */
+    div[data-testid="column"]:nth-of-type(12) button { background: #F39C12 !important; } /* 4 */
+    
+    /* ইনপুট ডিসপ্লে বক্সের স্টাইল */
+    .input-box {
+        background-color: #1E1E1E;
+        color: #00FF00;
+        padding: 15px;
+        border-radius: 15px;
+        font-family: 'Courier New', monospace;
+        margin-top: 20px;
+    }
+</style>
 """, unsafe_allow_html=True)
 
-# ---------------- INPUT UI ----------------
-st.write("### 🔢 Last Results Input")
+# সেশন স্টেট চেক (যদি আগে না থাকে)
+if "temp_input" not in st.session_state:
+    st.session_state.temp_input = []
 
-cols = st.columns(5)
-for i in range(10):
-    if cols[i % 5].button(str(i)):
-        st.session_state.inputs.append(i)
-        st.session_state.show = False
+# --- UI সাজানো ---
+st.markdown('<div style="background-color: white; padding: 20px; border-radius: 20px; color: black; text-align: center;">', unsafe_allow_html=True)
+st.write("### AI Analysis Dashboard")
 
-st.markdown(
-    f"<div class='input-box'>Input: {st.session_state.inputs}</div>",
-    unsafe_allow_html=True
-)
+# ১. Big Row সাজানো
+st.write("**Pattern Input Row**")
+col_b = st.columns([1.5, 1, 1, 1, 1, 1])
+col_b[0].button("+Big", key="b_label")
+if col_b[1].button("5", key="b5"): st.session_state.temp_input.append("B-5")
+if col_b[2].button("6", key="b6"): st.session_state.temp_input.append("B-6")
+if col_b[3].button("7", key="b7"): st.session_state.temp_input.append("B-7")
+if col_b[4].button("8", key="b8"): st.session_state.temp_input.append("B-8")
+if col_b[5].button("9", key="b9"): st.session_state.temp_input.append("B-9")
 
-c1, c2 = st.columns(2)
-if c1.button("⬅️ UNDO"):
-    if st.session_state.inputs:
-        st.session_state.inputs.pop()
-        st.rerun()
+st.write("") # গ্যাপ
 
-if c2.button("♻️ RESET"):
-    st.session_state.inputs = []
+# ২. Small Row সাজানো
+col_s = st.columns([1.5, 1, 1, 1, 1, 1])
+col_s[0].button("+Small", key="s_label")
+if col_s[1].button("0", key="s0"): st.session_state.temp_input.append("S-0")
+if col_s[2].button("1", key="s1"): st.session_state.temp_input.append("S-1")
+if col_s[3].button("2", key="s2"): st.session_state.temp_input.append("S-2")
+if col_s[4].button("3", key="s3"): st.session_state.temp_input.append("S-3")
+if col_s[5].button("4", key="s4"): st.session_state.temp_input.append("S-4")
+
+# ৩. ইনপুট ডিসপ্লে বক্স (ছবির মতো সবুজ টেক্সট)
+input_text = ", ".join(st.session_state.temp_input)
+st.markdown(f'<div class="input-box">Input: <br>{input_text}</div>', unsafe_allow_html=True)
+
+if st.button("Reset Display"):
+    st.session_state.temp_input = []
     st.rerun()
 
-period = st.text_input("Period (Last 3 digit)")
-
-# ---------------- AI ENGINE ----------------
-def ai_analyse(data, period):
-    seed = str(data) + str(period) + str(time.time())
-    random.seed(int(hashlib.sha256(seed.encode()).hexdigest(), 16))
-
-    big = sum(1 for x in data if x >= 5)
-    small = len(data) - big
-
-    big_small = "BIG" if big >= small else "SMALL"
-
-    if big_small == "BIG":
-        nums = random.sample([5,6,7,8,9], 3)
-    else:
-        nums = random.sample([0,1,2,3,4], 3)
-
-    probability = round(random.uniform(75, 99), 1)
-    return big_small, nums, probability
-
-# ---------------- GET SIGNAL ----------------
-if st.button("🚀 GET AI SIGNAL"):
-    if len(st.session_state.inputs) >= 5 and period:
-        st.session_state.show = True
-    else:
-        st.warning("⚠️ Minimum 5 input & period required")
-
-# ---------------- RESULT ----------------
-if st.session_state.show:
-    with st.spinner("AI analysing..."):
-        time.sleep(2)
-
-    bs, nums, prob = ai_analyse(st.session_state.inputs, period)
-
-    st.success("✅ AI SIGNAL READY")
-    st.markdown(f"""
-    ### 📊 RESULT
-    - **BIG / SMALL:** `{bs}`
-    - **POSSIBLE NUMBERS:** `{nums}`
-    - **PROBABILITY:** `{prob}%`
-    """)
-
-    w, l = st.columns(2)
-    if w.button("✅ WIN"):
-        c.execute(
-            "INSERT INTO history(period,big_small,numbers,probability,result) VALUES (?,?,?,?,?)",
-            (period, bs, str(nums), prob, "WIN")
-        )
-        conn.commit()
-        st.session_state.inputs = []
-        st.rerun()
-
-    if l.button("❌ LOSS"):
-        c.execute(
-            "INSERT INTO history(period,big_small,numbers,probability,result) VALUES (?,?,?,?,?)",
-            (period, bs, str(nums), prob, "LOSS")
-        )
-        conn.commit()
-        st.session_state.inputs = []
-        st.rerun()
-
-# ---------------- HISTORY ----------------
-st.write("---")
-st.subheader("🕒 VIP HISTORY")
-df = pd.read_sql(
-    "SELECT period,big_small,numbers,probability,result,time FROM history ORDER BY id DESC LIMIT 5",
-    conn
-)
-st.dataframe(df, use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
+    
