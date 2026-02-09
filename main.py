@@ -1,69 +1,120 @@
 import streamlit as st
 
 # পেজ সেটআপ
-st.set_page_config(page_title="AI Signal VIP", layout="centered")
+st.set_page_config(page_title="AI Signal Pro", layout="centered")
 
-# সেশন স্টেট ইনিশিয়ালাইজ করা (যাতে ডাটা হারিয়ে না যায়)
-if 'pattern' not in st.session_state:
-    st.session_state.pattern = []
+# সেশন স্টেট (ডাটা সেভ রাখার জন্য)
+if 'results' not in st.session_state:
+    st.session_state.results = []
 
 # বাটন ক্লিক ফাংশন
-def add_to_pattern(value):
-    if len(st.session_state.pattern) < 10:
-        st.session_state.pattern.append(str(value))
+def add_val(v):
+    if len(st.session_state.results) < 10:
+        st.session_state.results.append(str(v))
 
-def undo_last():
-    if st.session_state.pattern:
-        st.session_state.pattern.pop()
-
-# CSS দিয়ে ছবির মতো লুক আনা
+# কাস্টম CSS (মোবাইলে পাশাপাশি রাখা এবং কালার দেওয়ার জন্য)
 st.markdown("""
     <style>
-    .stButton > button {
-        width: 100%;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
+    /* কন্টেইনার স্টাইল */
+    .button-container {
+        display: flex;
+        flex-wrap: nowrap; /* যাতে ভেঙে নিচে না যায় */
+        justify-content: space-between;
+        gap: 5px;
+        margin-bottom: 10px;
+        background-color: white;
+        padding: 10px;
+        border-radius: 10px;
     }
-    /* Big/Small কালার */
-    div[data-testid="stHorizontalBlock"] > div:nth-child(1) button { background-color: #3498db; }
-    /* নম্বর বাটনগুলোর কালার সেট করা */
+    
+    /* সব বাটনের কমন স্টাইল */
+    .stButton > button {
+        border-radius: 5px;
+        color: white !important;
+        font-weight: bold;
+        border: none;
+        padding: 5px;
+        height: 40px;
+        width: 100%;
+        font-size: 14px;
+    }
+
+    /* আলাদা আলাদা কালার কোড */
+    div[data-testid="column"]:nth-of-type(1) button { background-color: #2196F3 !important; } /* Big/Small */
+    .c5 button { background-color: #FF5722 !important; }
+    .c6 button { background-color: #E91E63 !important; }
+    .c7 button { background-color: #9C27B0 !important; }
+    .c8 button { background-color: #673AB7 !important; }
+    .c9 button { background-color: #3F51B5 !important; }
+    
+    .c0 button { background-color: #4CAF50 !important; }
+    .c1 button { background-color: #009688 !important; }
+    .c2 button { background-color: #00BCD4 !important; }
+    .c3 button { background-color: #FFC107 !important; color: black !important; }
+    .c4 button { background-color: #FF9800 !important; }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("📊 আগের ১০টি রেজাল্ট ইনপুট দিন:")
 
-# বাটন গ্রিড (সাদা ব্যাকগ্রাউন্ড কন্টেইনারের মতো)
-with st.container():
-    # সারি ১: Big + (5-9)
-    cols1 = st.columns([2, 1, 1, 1, 1, 1])
-    if cols1[0].button("+Big"): add_to_pattern("B")
-    for i, num in enumerate(range(5, 10)):
-        if cols1[i+1].button(str(num)): add_to_pattern(num)
+# --- প্রথম সারি (Big + 5 6 7 8 9) ---
+col_b, c5, c6, c7, c8, c9 = st.columns([2, 1, 1, 1, 1, 1])
+with col_b: 
+    if st.button("+Big", key="big"): add_val("B")
+with c5:
+    st.markdown('<div class="c5">', unsafe_allow_html=True)
+    if st.button("5"): add_val(5)
+    st.markdown('</div>', unsafe_allow_html=True)
+with c6:
+    st.markdown('<div class="c6">', unsafe_allow_html=True)
+    if st.button("6"): add_val(6)
+    st.markdown('</div>', unsafe_allow_html=True)
+with c7:
+    st.markdown('<div class="c7">', unsafe_allow_html=True)
+    if st.button("7"): add_val(7)
+    st.markdown('</div>', unsafe_allow_html=True)
+with c8:
+    st.markdown('<div class="c8">', unsafe_allow_html=True)
+    if st.button("8"): add_val(8)
+    st.markdown('</div>', unsafe_allow_html=True)
+with c9:
+    st.markdown('<div class="c9">', unsafe_allow_html=True)
+    if st.button("9"): add_val(9)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # সারি ২: Small + (0-4)
-    cols2 = st.columns([2, 1, 1, 1, 1, 1])
-    if cols2[0].button("+Small"): add_to_pattern("S")
-    for i, num in enumerate(range(0, 5)):
-        if cols2[i+1].button(str(num)): add_to_pattern(num)
+# --- দ্বিতীয় সারি (Small + 0 1 2 3 4) ---
+col_s, c0, c1, c2, c3, c4 = st.columns([2, 1, 1, 1, 1, 1])
+with col_s:
+    st.markdown('<div class="small-box">', unsafe_allow_html=True) # আলাদা CSS ক্লাস দরকার নেই, col-1 ধরবে
+    if st.button("+Small", key="small"): add_val("S")
+    st.markdown('</div>', unsafe_allow_html=True)
+with c0:
+    st.markdown('<div class="c0">', unsafe_allow_html=True)
+    if st.button("0"): add_val(0)
+    st.markdown('</div>', unsafe_allow_html=True)
+with c1:
+    st.markdown('<div class="c1">', unsafe_allow_html=True)
+    if st.button("1"): add_val(1)
+    st.markdown('</div>', unsafe_allow_html=True)
+with c2:
+    st.markdown('<div class="c2">', unsafe_allow_html=True)
+    if st.button("2"): add_val(2)
+    st.markdown('</div>', unsafe_allow_html=True)
+with c3:
+    st.markdown('<div class="c3">', unsafe_allow_html=True)
+    if st.button("3"): add_val(3)
+    st.markdown('</div>', unsafe_allow_html=True)
+with c4:
+    st.markdown('<div class="c4">', unsafe_allow_html=True)
+    if st.button("4"): add_val(4)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("---")
 
-# UNDO বাটন
-if st.button("⬅️ ভুল হয়েছে? শেষ ইনপুট কাটুন (UNDO)"):
-    undo_last()
-
-# প্যাটার্ন বক্স (অটোমেটিক আপডেট হবে)
-current_pattern = ",".join(st.session_state.pattern)
-st.text_input(f"প্যাটার্ন ({len(st.session_state.pattern)}/10): ইনপুট দিন...", value=current_pattern)
-
-# পিরিয়ড ইনপুট
+# আউটপুট এবং পিরিয়ড বক্স
+res_text = ",".join(st.session_state.results)
+st.text_input(f"প্যাটার্ন ({len(st.session_state.results)}/10):", value=res_text)
 st.text_input("পিরিয়ড নম্বর দিন (শেষ ৩টি):", placeholder="যেমন: 655")
 
-# সিগন্যাল বাটন
-if st.button("🚀 GET SIGNAL (AI বিশ্লেষণ করুন)"):
-    if len(st.session_state.pattern) > 0:
-        st.info("আপনার প্যাটার্ন বিশ্লেষণ করা হচ্ছে...")
-    else:
-        st.error("দয়া করে আগে কিছু নম্বর ইনপুট দিন!")
-        
+if st.button("🚀 GET SIGNAL"):
+    st.success("সিগন্যাল তৈরি হচ্ছে...")
