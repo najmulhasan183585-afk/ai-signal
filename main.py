@@ -1,110 +1,67 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 # পেজ সেটআপ
-st.set_page_config(page_title="AI Signal VIP", layout="centered")
+st.set_page_config(page_title="AI Signal Mobile", layout="centered")
 
-# সেশন স্টেট ইনিশিয়ালাইজ করা
-if 'pattern_list' not in st.session_state:
-    st.session_state.pattern_list = []
+st.markdown("<h3 style='text-align: center;'>📊 আগের ১০টি রেজাল্ট ইনপুট দিন:</h3>", unsafe_allow_html=True)
 
-# বাটন ক্লিকের লজিক (পাইথন অংশ)
-# query_params ব্যবহার করা হয়েছে যাতে রিলোড হলেও ডাটা হারিয়ে না যায়
-q_params = st.query_params
-if "add" in q_params:
-    new_val = q_params["add"]
-    if len(st.session_state.pattern_list) < 10:
-        st.session_state.pattern_list.append(new_val)
-    st.query_params.clear() # প্যারামিটার মুছে ফেলা যাতে লুপ না হয়
-
-# হেডিং
-st.markdown("<h2 style='text-align: center;'>📊 আগের ১০টি রেজাল্ট ইনপুট দিন:</h2>", unsafe_allow_html=True)
-
-# কাস্টম বাটন ডিজাইন (HTML/CSS)
-# এখানে প্রতিটি লিঙ্কে target="_self" ব্যবহার করা হয়েছে যাতে একই উইন্ডোতে থাকে
-button_style = """
-<style>
-    .btn-container {
-        background-color: white;
-        padding: 15px;
-        border-radius: 15px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-    .btn-row {
-        display: flex;
-        gap: 5px;
-    }
-    .btn {
-        flex: 1;
-        height: 45px;
-        border: none;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
-        font-size: 14px;
-        text-align: center;
-        line-height: 45px;
-        text-decoration: none;
-        cursor: pointer;
-    }
-    .big { flex: 2; background-color: #3498db; }
-    .small { flex: 2; background-color: #e67e22; }
-    .c5 { background-color: #ff4d4d; } .c6 { background-color: #d63031; }
-    .c7 { background-color: #8e44ad; } .c8 { background-color: #2c3e50; }
-    .c9 { background-color: #34495e; } .c0 { background-color: #2ecc71; }
-    .c1 { background-color: #27ae60; } .c2 { background-color: #16a085; }
-    .c3 { background-color: #f1c40f; color: black; } .c4 { background-color: #f39c12; }
-</style>
-
-<div class="btn-container">
-    <div class="btn-row">
-        <a href="/?add=Big" target="_self" class="btn big">+Big</a>
-        <a href="/?add=5" target="_self" class="btn c5">5</a>
-        <a href="/?add=6" target="_self" class="btn c6">6</a>
-        <a href="/?add=7" target="_self" class="btn c7">7</a>
-        <a href="/?add=8" target="_self" class="btn c8">8</a>
-        <a href="/?add=9" target="_self" class="btn c9">9</a>
+# JavaScript এবং HTML দিয়ে তৈরি কাস্টম ইন্টারফেস
+# এটি রিফ্রেশ ছাড়াই সরাসরি প্যাটার্ন বক্স আপডেট করবে
+custom_component = """
+<div id="ui-root" style="background-color: white; padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; font-family: sans-serif;">
+    <div style="display: flex; gap: 4px;">
+        <button onclick="press('Big')" style="flex: 2; background: #3498db; color: white; border: none; height: 42px; border-radius: 6px; font-weight: bold;">+Big</button>
+        <button onclick="press('5')" style="flex: 1; background: #ff4d4d; color: white; border: none; border-radius: 6px; font-weight: bold;">5</button>
+        <button onclick="press('6')" style="flex: 1; background: #d63031; color: white; border: none; border-radius: 6px; font-weight: bold;">6</button>
+        <button onclick="press('7')" style="flex: 1; background: #8e44ad; color: white; border: none; border-radius: 6px; font-weight: bold;">7</button>
+        <button onclick="press('8')" style="flex: 1; background: #2c3e50; color: white; border: none; border-radius: 6px; font-weight: bold;">8</button>
+        <button onclick="press('9')" style="flex: 1; background: #34495e; color: white; border: none; border-radius: 6px; font-weight: bold;">9</button>
     </div>
-    <div class="btn-row">
-        <a href="/?add=Small" target="_self" class="btn small">+Small</a>
-        <a href="/?add=0" target="_self" class="btn c0">0</a>
-        <a href="/?add=1" target="_self" class="btn c1">1</a>
-        <a href="/?add=2" target="_self" class="btn c2">2</a>
-        <a href="/?add=3" target="_self" class="btn c3">3</a>
-        <a href="/?add=4" target="_self" class="btn c4">4</a>
+    <div style="display: flex; gap: 4px;">
+        <button onclick="press('Small')" style="flex: 2; background: #e67e22; color: white; border: none; height: 42px; border-radius: 6px; font-weight: bold;">+Small</button>
+        <button onclick="press('0')" style="flex: 1; background: #2ecc71; color: white; border: none; border-radius: 6px; font-weight: bold;">0</button>
+        <button onclick="press('1')" style="flex: 1; background: #27ae60; color: white; border: none; border-radius: 6px; font-weight: bold;">1</button>
+        <button onclick="press('2')" style="flex: 1; background: #16a085; color: white; border: none; border-radius: 6px; font-weight: bold;">2</button>
+        <button onclick="press('3')" style="flex: 1; background: #f1c40f; color: black; border: none; border-radius: 6px; font-weight: bold;">3</button>
+        <button onclick="press('4')" style="flex: 1; background: #f39c12; color: white; border: none; border-radius: 6px; font-weight: bold;">4</button>
     </div>
 </div>
+
+<script>
+    let pattern = [];
+    function press(val) {
+        if (pattern.length < 10) {
+            pattern.push(val);
+            // মেইন উইন্ডোর টেক্সট ইনপুট খুঁজে আপডেট করা
+            const inputs = window.parent.document.querySelectorAll('input[type="text"]');
+            if (inputs.length > 0) {
+                inputs[0].value = pattern.join(',');
+                inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+    }
+</script>
 """
-st.markdown(button_style, unsafe_allow_html=True)
 
-# ডাটা প্রসেসিং
-current_pattern = ",".join(st.session_state.pattern_list)
-count = len(st.session_state.pattern_list)
+# কাস্টম UI রেন্ডার করা (হাইট সেট করা হয়েছে যাতে মোবাইলে ঠিক দেখায়)
+components.html(custom_component, height=130)
 
-# ইনপুট বক্স (যেখানে ১-১০ পর্যন্ত সংখ্যা উঠবে)
-st.text_input(f"প্যাটার্ন ({count}/10):", value=current_pattern, key="pattern_display")
+# প্যাটার্ন ডিসপ্লে বক্স
+st.write("")
+pattern_input = st.text_input("প্যাটার্ন (উপরে বাটনে ক্লিক করুন):", placeholder="যেমন: 5,6,Small", key="p_box")
 
-# পিরিয়ড ইনপুট
-st.text_input("পিরিয়ড নম্বর দিন (শেষ ৩টি):", placeholder="যেমন: 655")
+# পিরিয়ড ইনপুট
+period = st.text_input("পিরিয়ড নম্বর দিন (শেষ ৩টি):", placeholder="যেমন: 655")
 
 # সিগন্যাল বাটন
 if st.button("🚀 GET SIGNAL (AI বিশ্লেষণ করুন)"):
-    if count > 0:
-        st.success(f"আপনার ইনপুট '{current_pattern}' প্রসেস হচ্ছে...")
+    if pattern_input:
+        st.success(f"বিশ্লেষণ করা হচ্ছে: {pattern_input}")
     else:
-        st.warning("দয়া করে আগে বাটন চেপে ইনপুট দিন!")
+        st.error("দয়া করে আগে সংখ্যা ইনপুট দিন!")
 
-# UNDO এবং CLEAR বাটন (সুবিধার জন্য)
-col_un, col_cl = st.columns(2)
-with col_un:
-    if st.button("⬅️ UNDO"):
-        if st.session_state.pattern_list:
-            st.session_state.pattern_list.pop()
-            st.rerun()
-with col_cl:
-    if st.button("🗑️ CLEAR ALL"):
-        st.session_state.pattern_list = []
-        st.rerun()
-        
+# ক্লিয়ার বাটন (যদি ভুল হয়)
+if st.button("🗑️ সব মুছুন (Clear All)"):
+    st.rerun()
+    
