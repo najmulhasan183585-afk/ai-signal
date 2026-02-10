@@ -118,3 +118,4 @@ st.text_input("পিরিয়ড নম্বর দিন (শেষ ৩ট
 
 if st.button("🚀 GET SIGNAL"):
     st.success("সিগন্যাল তৈরি হচ্ছে...")
+    
