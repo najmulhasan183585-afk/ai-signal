@@ -1,120 +1,78 @@
 import streamlit as st
 import sqlite3
+import streamlit.components.v1 as components
 
-# ১. ডাটাবেজ এবং সেশন সেটআপ
-conn = sqlite3.connect('signals_pro.db', check_same_thread=False)
+# ১. ডাটাবেজ সেটআপ
+conn = sqlite3.connect('ai_database.db', check_same_thread=False)
 c = conn.cursor()
-c.execute('CREATE TABLE IF NOT EXISTS signals (pattern TEXT, period TEXT)')
+c.execute('CREATE TABLE IF NOT EXISTS history (pattern TEXT, period TEXT)')
 conn.commit()
 
-if 'pattern_list' not in st.session_state:
-    st.session_state.pattern_list = []
+st.set_page_config(page_title="AI Signal Pro", layout="centered")
 
-# বাটন ক্লিক হ্যান্ডলার (URL এর মাধ্যমে ডাটা নেওয়া যাতে রিফ্রেশে সমস্যা না হয়)
-params = st.query_params
-if "add" in params:
-    val = params["add"]
-    if len(st.session_state.pattern_list) < 10:
-        st.session_state.pattern_list.append(str(val))
-    st.query_params.clear()
+st.markdown("<h3 style='text-align: center;'>📊 আগের ১০টি রেজাল্ট ইনপুট দিন:</h3>", unsafe_allow_html=True)
 
-st.set_page_config(page_title="AI Signal Fix", layout="centered")
-
-# ২. কাস্টম CSS: যা বাটনকে নিচে নামতে দেবে না
-st.markdown("""
-    <style>
-    .fixed-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        background-color: white;
-        padding: 12px;
-        border-radius: 12px;
-        width: 100%;
-    }
-    .grid-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 4px;
-        width: 100%;
-    }
-    .grid-btn {
-        flex: 1;
-        height: 40px;
-        border-radius: 5px;
-        color: white;
-        text-decoration: none;
-        font-weight: bold;
-        font-size: 13px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-    }
-    .big-main { flex: 2; background-color: #3498db; }
-    .small-main { flex: 2; background-color: #e67e22; }
-    .c5 { background-color: #ff4d4d; } .c6 { background-color: #d63031; }
-    .c7 { background-color: #8e44ad; } .c8 { background-color: #2c3e50; }
-    .c9 { background-color: #34495e; } .c0 { background-color: #2ecc71; }
-    .c1 { background-color: #27ae60; } .c2 { background-color: #16a085; }
-    .c3 { background-color: #f1c40f; color: black; } .c4 { background-color: #f39c12; }
-    </style>
-    """, unsafe_allow_html=True)
-
-st.subheader("📊 আগের ১০টি রেজাল্ট ইনপুট দিন:")
-
-# ৩. HTML গ্রিড (এটিই বাটনগুলোকে পাশাপাশি রাখবে)
-grid_html = f"""
-<div class="fixed-grid">
-    <div class="grid-row">
-        <a href="/?add=Big" target="_self" class="grid-btn big-main">+Big</a>
-        <a href="/?add=5" target="_self" class="grid-btn c5">5</a>
-        <a href="/?add=6" target="_self" class="grid-btn c6">6</a>
-        <a href="/?add=7" target="_self" class="grid-btn c7">7</a>
-        <a href="/?add=8" target="_self" class="grid-btn c8">8</a>
-        <a href="/?add=9" target="_self" class="grid-btn c9">9</a>
+# ২. কাস্টম রিফ্রেশ-মুক্ত UI (HTML + JavaScript)
+# এটি মোবাইলে বাটন পাশাপাশি রাখবে এবং ক্লিক করলে রিফ্রেশ হবে না
+custom_ui = """
+<div id="wrapper" style="background: white; padding: 10px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; gap: 4px;">
+        <button onclick="send('Big')" style="flex: 2; background: #3498db; color: white; border: none; height: 40px; border-radius: 5px; font-weight: bold;">+Big</button>
+        <button onclick="send('5')" style="flex: 1; background: #ff4d4d; color: white; border: none; border-radius: 5px;">5</button>
+        <button onclick="send('6')" style="flex: 1; background: #d63031; color: white; border: none; border-radius: 5px;">6</button>
+        <button onclick="send('7')" style="flex: 1; background: #8e44ad; color: white; border: none; border-radius: 5px;">7</button>
+        <button onclick="send('8')" style="flex: 1; background: #2c3e50; color: white; border: none; border-radius: 5px;">8</button>
+        <button onclick="send('9')" style="flex: 1; background: #34495e; color: white; border: none; border-radius: 5px;">9</button>
     </div>
-    <div class="grid-row">
-        <a href="/?add=Small" target="_self" class="grid-btn small-main">+Small</a>
-        <a href="/?add=0" target="_self" class="grid-btn c0">0</a>
-        <a href="/?add=1" target="_self" class="grid-btn c1">1</a>
-        <a href="/?add=2" target="_self" class="grid-btn c2">2</a>
-        <a href="/?add=3" target="_self" class="grid-btn c3">3</a>
-        <a href="/?add=4" target="_self" class="grid-btn c4">4</a>
+    <div style="display: flex; gap: 4px;">
+        <button onclick="send('Small')" style="flex: 2; background: #e67e22; color: white; border: none; height: 40px; border-radius: 5px; font-weight: bold;">+Small</button>
+        <button onclick="send('0')" style="flex: 1; background: #2ecc71; color: white; border: none; border-radius: 5px;">0</button>
+        <button onclick="send('1')" style="flex: 1; background: #27ae60; color: white; border: none; border-radius: 5px;">1</button>
+        <button onclick="send('2')" style="flex: 1; background: #16a085; color: white; border: none; border-radius: 5px;">2</button>
+        <button onclick="send('3')" style="flex: 1; background: #f1c40f; color: black; border: none; border-radius: 5px;">3</button>
+        <button onclick="send('4')" style="flex: 1; background: #f39c12; color: white; border: none; border-radius: 5px;">4</button>
     </div>
 </div>
+
+<script>
+    let currentPattern = [];
+    function send(val) {
+        if (currentPattern.length < 10) {
+            currentPattern.push(val);
+            // মেইন পাইথন ইনপুট বক্স খুঁজে সেখানে ডাটা পাঠানো
+            const inputs = window.parent.document.querySelectorAll('input[type="text"]');
+            if (inputs.length > 0) {
+                inputs[0].value = currentPattern.join(',');
+                inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+    }
+</script>
 """
-st.markdown(grid_html, unsafe_allow_html=True)
 
-# ৪. ইনপুট ও আউটপুট এরিয়া
+# UI রেন্ডার করা
+components.html(custom_ui, height=120)
+
+# ৩. পাইথন ইনপুট বক্স (যেখানে ডাটা জমা হবে)
 st.write("")
-current_p = ",".join(st.session_state.pattern_list)
-st.text_input(f"প্যাটার্ন ({len(st.session_state.pattern_list)}/10):", value=current_p)
-period_val = st.text_input("পিরিয়ড নম্বর দিন:")
+pattern_data = st.text_input("প্যাটার্ন (বক্স আপডেট হবে):", key="main_pattern")
+period_data = st.text_input("পিরিয়ড নম্বর দিন (শেষ ৩টি):", placeholder="যেমন: 655")
 
-if st.button("🚀 GET SIGNAL & SAVE"):
-    if current_p and period_val:
-        c.execute("INSERT INTO signals VALUES (?, ?)", (current_p, period_val))
+# ৪. ডাটাবেজে সেভ করার লজিক
+if st.button("🚀 GET SIGNAL & SAVE TO DB"):
+    if pattern_data and period_data:
+        c.execute("INSERT INTO history (pattern, period) VALUES (?, ?)", (pattern_data, period_data))
         conn.commit()
-        st.success("ডাটাবেজে সেভ হয়েছে!")
-        st.session_state.pattern_list = []
-        st.rerun()
+        st.success(f"সফলভাবে ডাটাবেজে সেভ হয়েছে: {pattern_data}")
     else:
-        st.error("ইনপুট খালি রাখা যাবে না!")
+        st.error("দয়া করে প্যাটার্ন এবং পিরিয়ড উভয়ই ইনপুট দিন!")
 
-# ৫. কন্ট্রোল বাটন
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("⬅️ UNDO"):
-        if st.session_state.pattern_list:
-            st.session_state.pattern_list.pop()
-            st.rerun()
-with col2:
-    if st.button("🗑️ CLEAR ALL"):
-        st.session_state.pattern_list = []
-        st.rerun()
-
-if st.checkbox("ডাটাবেজ রেকর্ড দেখুন"):
-    rows = c.execute("SELECT * FROM signals ORDER BY rowid DESC LIMIT 5").fetchall()
+# ৫. আগের ডাটা দেখার অপশন
+if st.checkbox("আগের জমানো ডাটা দেখুন"):
+    rows = c.execute("SELECT * FROM history ORDER BY rowid DESC LIMIT 5").fetchall()
     st.table(rows)
-  
+
+# ক্লিয়ার বাটন
+if st.button("🗑️ সব মুছুন (Refresh App)"):
+    st.rerun()
+    
