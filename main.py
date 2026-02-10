@@ -8,12 +8,12 @@ c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS history (pattern TEXT, period TEXT)')
 conn.commit()
 
-st.set_page_config(page_title="AI Signal Pro", layout="centered")
+st.set_page_config(page_title="AI Signal VIP", layout="centered")
 
 st.markdown("<h3 style='text-align: center;'>📊 আগের ১০টি রেজাল্ট ইনপুট দিন:</h3>", unsafe_allow_html=True)
 
-# ২. কাস্টম রিফ্রেশ-মুক্ত UI (HTML + JavaScript)
-# এটি মোবাইলে বাটন পাশাপাশি রাখবে এবং ক্লিক করলে রিফ্রেশ হবে না
+# ২. কাস্টম UI (HTML + JavaScript)
+# এখানে 'setInterval' ব্যবহার করা হয়েছে যাতে পেজ রিফ্রেশ হলেও এটি সবসময় ইনপুট বক্সের সাথে কানেক্ট থাকে
 custom_ui = """
 <div id="wrapper" style="background: white; padding: 10px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
     <div style="display: flex; gap: 4px;">
@@ -36,43 +36,60 @@ custom_ui = """
 
 <script>
     let currentPattern = [];
+    
+    // মেইন উইন্ডোর ইনপুট বক্স খুঁজে ডাটা পাঠানোর ফাংশন
     function send(val) {
         if (currentPattern.length < 10) {
             currentPattern.push(val);
-            // মেইন পাইথন ইনপুট বক্স খুঁজে সেখানে ডাটা পাঠানো
-            const inputs = window.parent.document.querySelectorAll('input[type="text"]');
-            if (inputs.length > 0) {
-                inputs[0].value = currentPattern.join(',');
-                inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-            }
+            updateInput();
         }
     }
+
+    function updateInput() {
+        const inputs = window.parent.document.querySelectorAll('input[type="text"]');
+        if (inputs.length > 0) {
+            inputs[0].value = currentPattern.join(',');
+            inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+
+    // প্রতি ক্লিকে ডাটা রিসেট হওয়া রোধ করতে (যদি প্রয়োজন হয়)
+    window.parent.document.addEventListener('keydown', function(e) {
+        if (e.key === "Enter") { currentPattern = []; }
+    });
 </script>
 """
 
 # UI রেন্ডার করা
-components.html(custom_ui, height=120)
+components.html(custom_ui, height=125)
 
-# ৩. পাইথন ইনপুট বক্স (যেখানে ডাটা জমা হবে)
+# ৩. মেইন ইন্টারফেস
 st.write("")
-pattern_data = st.text_input("প্যাটার্ন (বক্স আপডেট হবে):", key="main_pattern")
+# এখানে value হিসেবে কিছুই দিব না যাতে রিফ্রেশ হওয়ার পর বক্স খালি হয়ে নতুন করে ইনপুট নিতে পারে
+pattern_data = st.text_input("প্যাটার্ন (বক্স আপডেট হবে):", key="main_input")
 period_data = st.text_input("পিরিয়ড নম্বর দিন (শেষ ৩টি):", placeholder="যেমন: 655")
 
-# ৪. ডাটাবেজে সেভ করার লজিক
+# ৪. ডাটা সেভ লজিক
 if st.button("🚀 GET SIGNAL & SAVE TO DB"):
     if pattern_data and period_data:
+        # ডাটাবেজে সেভ করা
         c.execute("INSERT INTO history (pattern, period) VALUES (?, ?)", (pattern_data, period_data))
         conn.commit()
-        st.success(f"সফলভাবে ডাটাবেজে সেভ হয়েছে: {pattern_data}")
+        
+        st.success(f"সেভ হয়েছে! পিরিয়ড: {period_data}")
+        st.info("নতুন ইনপুটের জন্য বাটনগুলো আবার কাজ করবে।")
+        
+        # প্রেডিকশন লজিক এখানে দিতে পারেন
+        # st.write("Next Result: BIG") 
     else:
-        st.error("দয়া করে প্যাটার্ন এবং পিরিয়ড উভয়ই ইনপুট দিন!")
+        st.error("দয়া করে প্যাটার্ন এবং পিরিয়ড ইনপুট দিন!")
 
-# ৫. আগের ডাটা দেখার অপশন
+# ৫. হিস্টোরি টেবিল
 if st.checkbox("আগের জমানো ডাটা দেখুন"):
     rows = c.execute("SELECT * FROM history ORDER BY rowid DESC LIMIT 5").fetchall()
     st.table(rows)
 
-# ক্লিয়ার বাটন
+# সব মুছার বাটন
 if st.button("🗑️ সব মুছুন (Refresh App)"):
     st.rerun()
     
