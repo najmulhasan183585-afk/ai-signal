@@ -1,5 +1,9 @@
-
 export default async function handler(req, res) {
+  // অ্যাপ টেস্ট করার জন্য GET রিকোয়েস্ট পাঠালে সফল মেসেজ দেখাবে
+  if (req.method === 'GET') {
+    return res.status(200).json({ status: 'Webhook is active and ready!' });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
